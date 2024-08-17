@@ -1,11 +1,11 @@
 #include <sys/mount.h>
 #include <libgen.h>
 #include <sys/sysmacros.h>
+#include <flags.h>
 
 #include <sepolicy.hpp>
 #include <consts.hpp>
 #include <base.hpp>
-#include <flags.h>
 
 #include "init.hpp"
 
@@ -76,7 +76,8 @@ static void patch_rc_scripts(const char *src_path, const char *tmp_path, bool wr
         rc_list.clear();
 
         if (access("/vendor/build.prop", F_OK) == 0) {
-            xmkdirs(ROOTOVL "/vendor/build.prop", 0755);
+
+            xmkdirs(ROOTOVL "/vendor", 0755);
             FILE *tmp = xfopen(ROOTOVL "/vendor/build.prop", "we");
             if (!tmp) {
                 fprintf(dest.get(), "\tsetprop ro.patch_status failed\n");
