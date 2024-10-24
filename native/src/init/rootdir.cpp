@@ -96,6 +96,37 @@ static void patch_rc_scripts(const char *src_path, const char *tmp_path, bool wr
         }
         rc_list.clear();
 
+        if (access("/vendor/build.prop", F_OK) == 0) {
+
+            xmkdirs(ROOTOVL "/vendor", 0755);
+            FILE *tmp = xfopen(ROOTOVL "/vendor/build.prop", "we");
+            if (!tmp) {
+                fprintf(dest.get(), "\tsetprop ro.patch_status failed\n");
+            } else {
+                file_readline("/vendor/build.prop", [=](string_view line) -> bool {
+                    if (str_starts(line, "ro.zygote=zygote64")) {
+                        fprintf(tmp, "ro.zygote=zygote64_32\n");
+                        return true;
+                    }
+
+                    if (str_starts(line, "ro.vendor.product.cpu.abilist=arm64-v8a")) {
+                        fprintf(tmp, "ro.vendor.product.cpu.abilist=arm64-v8a,armeabi-v7a,armeabi\n");
+                        return true;
+                    }
+
+                    if (str_starts(line, "ro.vendor.product.cpu.abilist32=")) {
+                        fprintf(tmp, "ro.vendor.product.cpu.abilist32=armeabi-v7a,armeabi\n");
+                        return true;
+                    }
+
+                    fprintf(tmp, "%s", line.data());
+                    return true;
+                });
+                fclose(tmp);
+                clone_attr("/vendor/build.prop", ROOTOVL "/vendor/build.prop");
+            }
+        }
+
         // Inject Magisk rc scripts
         rust::inject_magisk_rc(fileno(dest.get()), tmp_path);
 
