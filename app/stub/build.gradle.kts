@@ -27,9 +27,9 @@ android {
 
     buildTypes {
         release {
+            proguardFiles("proguard-rules.pro")
             isMinifyEnabled = true
             isShrinkResources = false
-            proguardFiles("proguard-rules.pro")
         }
     }
 
@@ -38,7 +38,7 @@ android {
     }
 }
 
-setupStub()
+setupStubApk()
 
 dependencies {
     implementation(project(":app:shared"))

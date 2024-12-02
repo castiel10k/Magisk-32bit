@@ -1,6 +1,8 @@
 import com.android.build.api.artifact.ArtifactTransformationRequest
 import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.dsl.ApkSigningConfig
+import com.android.build.api.instrumentation.FramesComputationMode.COMPUTE_FRAMES_FOR_INSTRUMENTED_METHODS
+import com.android.build.api.instrumentation.InstrumentationScope
 import com.android.build.api.variant.ApplicationAndroidComponentsExtension
 import com.android.build.gradle.BaseExtension
 import com.android.build.gradle.LibraryExtension
@@ -15,6 +17,7 @@ import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Copy
@@ -348,7 +351,34 @@ fun Project.setupAppCommon() {
     }
 }
 
-fun Project.setupStub() {
+fun Project.setupMainApk() {
+    setupAppCommon()
+
+    android {
+        namespace = "com.topjohnwu.magisk"
+
+        defaultConfig {
+            applicationId = "com.topjohnwu.magisk"
+            vectorDrawables.useSupportLibrary = true
+            versionName = Config.version
+            versionCode = Config.versionCode
+            ndk {
+                abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64", "riscv64")
+                debugSymbolLevel = "FULL"
+            }
+        }
+
+        androidComponents.onVariants { variant ->
+            variant.instrumentation.apply {
+                setAsmFramesComputationMode(COMPUTE_FRAMES_FOR_INSTRUMENTED_METHODS)
+                transformClassesWith(
+                    DesugarClassVisitorFactory::class.java, InstrumentationScope.ALL) {}
+            }
+        }
+    }
+}
+
+fun Project.setupStubApk() {
     setupAppCommon()
 
     androidComponents.onVariants { variant ->
